@@ -328,12 +328,13 @@ async function loadData() {
   if (sheetId) {
     try {
       allData = await loadFromGoogleSheets(sheetId);
-      document.getElementById('last-sync').textContent = 'עודכן: ' + new Date().toLocaleString('he-IL');
+      if (!allData || allData.length === 0) throw new Error('No data returned');
+      document.getElementById('last-sync').textContent = 'עודכן: ' + new Date().toLocaleString('he-IL') + ' · ' + allData.length + ' חברות';
       document.getElementById('setup-banner').classList.remove('show');
     } catch(e) {
-      console.warn('Failed to load from sheets, using demo data:', e);
+      console.error('Sheet load error:', e);
       allData = DEMO_DATA;
-      document.getElementById('last-sync').textContent = 'מצב הדגמה (לא ניתן לטעון Sheet)';
+      document.getElementById('last-sync').textContent = 'שגיאה בטעינה: ' + e.message + ' (מציג דמו)';
     }
   } else {
     allData = DEMO_DATA;
