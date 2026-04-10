@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>פורטפוליו השקעות</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #1a1a2e; direction: rtl; }
+
+/* ---- HEADER ---- */
+.header { background: #1a1a2e; color: white; padding: 1.25rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+.header .sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+.refresh-btn { background: #0d6efd; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.refresh-btn:hover { background: #0b5ed7; }
+
+/* ---- SETUP BANNER ---- */
+.setup-banner { background: #fff3cd; border: 1px solid #ffc107; padding: 1rem 2rem; font-size: 13px; display: none; }
+.setup-banner.show { display: block; }
+.setup-banner a { color: #0d6efd; }
+
+/* ---- METRICS ---- */
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; padding: 1.5rem 2rem 0; }
+.metric-card { background: white; border-radius: 10px; padding: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.metric-card .label { font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 500; }
+.metric-card .value { font-size: 26px; font-weight: 700; color: #1a1a2e; }
+.metric-card .change { font-size: 12px; color: #64748b; margin-top: 4px; }
+.metric-card .change.up { color: #198754; }
+.metric-card .change.down { color: #dc3545; }
+
+/* ---- FILTERS ---- */
+.controls { padding: 1.25rem 2rem; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.controls input, .controls select { padding: 8px 14px; border: 1px solid #dee2e6; border-radius: 7px; font-size: 13px; background: white; color: #1a1a2e; outline: none; }
+.controls input:focus, .controls select:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.1); }
+.controls input { min-width: 200px; }
+
+/* ---- TABLE ---- */
+.table-container { padding: 0 2rem 2rem; }
+.table-wrap { background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { padding: 12px 14px; text-align: right; font-weight: 600; font-size: 12px; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0; white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 10; }
+thead th:hover { color: #1a1a2e; background: #f1f5f9; }
+thead th .sort-icon { font-size: 10px; margin-right: 4px; opacity: 0.4; }
+thead th.sorted .sort-icon { opacity: 1; color: #0d6efd; }
+tbody tr { border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.1s; }
+tbody tr:hover { background: #f8fafc; }
+tbody tr:last-child { border-bottom: none; }
+tbody td { padding: 13px 14px; vertical-align: middle; }
+
+.company-cell { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.co-name { font-weight: 600; font-size: 13px; color: #1a1a2e; }
+.co-sector { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+
+.badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-active { background: #d1fae5; color: #065f46; }
+.badge-watch { background: #fef3c7; color: #92400e; }
+.badge-exit { background: #dbeafe; color: #1e40af; }
+.badge-dead { background: #fee2e2; color: #991b1b; }
+.badge-default { background: #f1f5f9; color: #475569; }
+
+.moic { font-weight: 700; font-size: 13px; }
+.moic-up { color: #198754; }
+.moic-flat { color: #64748b; }
+.moic-down { color: #dc3545; }
+
+.action-btn { padding: 5px 10px; font-size: 11px; border: 1px solid #dee2e6; border-radius: 5px; background: white; color: #475569; cursor: pointer; margin-left: 4px; }
+.action-btn:hover { background: #f1f5f9; color: #1a1a2e; }
+
+/* ---- MODAL ---- */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
+.overlay.open { display: flex; }
+.modal { background: white; border-radius: 14px; padding: 2rem; width: 680px; max-width: 100%; position: relative; }
+.modal-close { position: absolute; top: 1rem; left: 1rem; background: #f1f5f9; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: #e2e8f0; color: #1a1a2e; }
+.modal-header { display: flex; align-items: center; gap: 14px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; }
+.modal-avatar { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; }
+.modal-title { font-size: 20px; font-weight: 700; }
+.modal-subtitle { font-size: 13px; color: #64748b; margin-top: 3px; }
+
+.kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+.kpi { background: #f8fafc; border-radius: 8px; padding: 12px 14px; }
+.kpi .kl { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+.kpi .kv { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+
+.section-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; margin: 1.25rem 0 8px; }
+
+.desc-box { background: #f8fafc; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #475569; line-height: 1.65; }
+
+.rounds-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rounds-table th { text-align: right; padding: 7px 10px; background: #f8fafc; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+.rounds-table td { padding: 9px 10px; border-bottom: 1px solid #f1f5f9; color: #374151; }
+.rounds-table tr:last-child td { border-bottom: none; }
+
+.status-timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; gap: 12px; }
+.tl-left { display: flex; flex-direction: column; align-items: center; }
+.tl-dot { width: 10px; height: 10px; border-radius: 50%; background: #dee2e6; flex-shrink: 0; margin-top: 3px; }
+.tl-dot.latest { background: #198754; }
+.tl-line { width: 2px; background: #f1f5f9; flex: 1; margin: 2px 0; min-height: 16px; }
+.tl-content { padding-bottom: 14px; }
+.tl-date { font-size: 11px; color: #94a3b8; margin-bottom: 3px; }
+.tl-text { font-size: 13px; color: #374151; line-height: 1.55; }
+
+/* ---- LOADING ---- */
+.loading { text-align: center; padding: 3rem; color: #94a3b8; font-size: 14px; }
+.spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid #e2e8f0; border-top-color: #0d6efd; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- CONFIG MODAL ---- */
+.config-section { background: #f8fafc; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+.config-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #1a1a2e; }
+.config-section input { width: 100%; padding: 9px 12px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px; margin-bottom: 8px; }
+.config-section p { font-size: 12px; color: #64748b; line-height: 1.6; }
+.btn-primary { background: #0d6efd; color: white; border: none; padding: 10px 20px; border-radius: 7px; font-size: 13px; cursor: pointer; font-weight: 600; }
+.btn-primary:hover { background: #0b5ed7; }
+.btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #dee2e6; padding: 10px 20px; border-radius: 7px; font-size: 13px; cursor: pointer; margin-right: 8px; }
+
+/* ---- DOCUMENTS ---- */
+.docs-list { display: flex; flex-direction: column; gap: 4px; }
+.doc-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; text-decoration: none; color: #1a1a2e; border-radius: 5px; transition: background 0.1s; }
+.doc-row:hover { background: #f1f5f9; }
+.doc-icon { font-size: 15px; flex-shrink: 0; width: 22px; text-align: center; }
+.doc-row-name { font-size: 13px; color: #0d6efd; flex: 1; }
+.doc-row-name:hover { text-decoration: underline; }
+.doc-row-date { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+
+@media (max-width: 768px) {
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); padding: 1rem; }
+  .controls { padding: 1rem; }
+  .table-container { padding: 0 1rem 1rem; }
+  .header { padding: 1rem; }
+  .header h1 { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="font-size:11px;color:#64748b;margin-bottom:4px">ANGEL PORTFOLIO</div>
+    <h1>פורטפוליו השקעות</h1>
+    <div class="sub" id="last-sync">טוען נתונים...</div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <button class="refresh-btn" onclick="openConfig()">⚙ הגדרות</button>
+    <button class="refresh-btn" onclick="loadData()">↻ רענן</button>
+  </div>
+</div>
+
+<div class="setup-banner" id="setup-banner">
+  ⚠️ <strong>נדרשת הגדרה:</strong> לחץ על כפתור "הגדרות" והכנס את מזהה ה-Google Sheet שלך.
+  <a href="#" onclick="openConfig()">הגדר עכשיו →</a>
+</div>
+
+<div class="metrics-grid" id="metrics">
+  <div class="metric-card"><div class="label">טוען...</div><div class="value">—</div></div>
+</div>
+
+<div class="controls">
+  <input type="text" id="search" placeholder="🔍 חיפוש חברה או תחום..." oninput="renderTable()">
+  <select id="filter-status" onchange="renderTable()">
+    <option value="">כל הסטטוסים</option>
+    <option value="פעיל">פעיל</option>
+    <option value="מעקב">מעקב</option>
+    <option value="יציאה">יציאה</option>
+    <option value="סגור">סגור</option>
+  </select>
+  <select id="filter-sector" onchange="renderTable()">
+    <option value="">כל התחומים</option>
+  </select>
+  <select id="sort-by" onchange="renderTable()">
+    <option value="total_desc">סה"כ השקעה ↓</option>
+    <option value="total_asc">סה"כ השקעה ↑</option>
+    <option value="date_desc">תאריך אחרון ↓</option>
+    <option value="name_asc">שם א-ת</option>
+    <option value="moic_desc">מכפיל ↓</option>
+  </select>
+</div>
+
+<div class="table-container">
+  <div class="table-wrap">
+    <div id="table-area" class="loading">
+      <div class="spinner"></div><br>טוען נתונים מ-Google Sheets...
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="overlay" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="modal" id="detail-modal"></div>
+</div>
+
+<!-- Config Modal -->
+<div class="overlay" id="config-overlay" onclick="closeConfig(event)">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" onclick="document.getElementById('config-overlay').classList.remove('open')">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:1.5rem">⚙ הגדרות חיבור</div>
+
+    <div class="config-section">
+      <h3>🔗 Google Sheet ID</h3>
+      <p style="margin-bottom:8px">העתק את ה-ID מה-URL של ה-Sheet:<br>
+      <code style="font-size:11px;background:#e2e8f0;padding:2px 6px;border-radius:3px">
+      https://docs.google.com/spreadsheets/d/<strong>[זה ה-ID]</strong>/edit
+      </code></p>
+      <input type="text" id="sheet-id-input" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" />
+    </div>
+
+    <div class="config-section">
+      <h3>📋 הוראות הגדרה</h3>
+      <p>
+        1. פתח את קובץ <strong>portfolio_google_sheets.xlsx</strong> שהורדת<br>
+        2. עלה אותו ל-Google Drive (גרור לתוך Drive)<br>
+        3. לחץ ימני → "פתח עם Google Sheets"<br>
+        4. עבור ל: <strong>קובץ → שתף → שתף עם כולם</strong> (צופה)<br>
+        5. העתק את ה-ID מה-URL<br>
+        6. הדבק אותו כאן ולחץ שמור
+      </p>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-top:1rem">
+      <button class="btn-primary" onclick="saveConfig()">שמור וטען</button>
+      <button class="btn-secondary" onclick="document.getElementById('config-overlay').classList.remove('open')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===========================
+// CONFIG
+// ===========================
+const DEMO_DATA = [
+  { name:'Intratech', sector:'מחקר ל-לב', status:'סגור', first_date:'28/12/2021', total_invested:330023, rounds:1, price_then:36.87, price_now:0, shares:8951, last_update:'01/04/2025', status_text:'החברה סוגרת את הפעילות ומוחקת את ההשקעה', investments:[{date:'28/12/2021',amount:330023,shares:8951,price_then:36.87,price_now:0}] },
+  { name:"אן.אר סווס טכנ' בעמ", sector:'שינוי מין האפרוח', status:'מעקב', first_date:'05/01/2023', total_invested:300000, rounds:1, price_then:null, price_now:null, shares:0, last_update:'01/01/2025', status_text:'החברה בקשיים תזרימיים, מחפשת גיוס, נכון לכרגע ההנהלה התפטרה.', investments:[{date:'05/01/2023',amount:300000,shares:0}] },
+  { name:'תמר רובוטיקה', sector:'רובוט ניתוחי מוח', status:'מעקב', first_date:'28/03/2023', total_invested:250000, rounds:1, price_then:null, price_now:null, shares:6293, last_update:'01/06/2025', status_text:'החברה אמורה לקראת סוף אוגוסט לסיים את כל הכספים בחשבון וללכת או לפירוק או למיזוג', investments:[{date:'28/03/2023',amount:250000,shares:6293}] },
+  { name:'סנולה', sector:'מכשיר סטטוסקופ', status:'פעיל', first_date:'02/03/2022', total_invested:450000, rounds:2, price_then:null, price_now:10.3, shares:0, last_update:'01/06/2025', status_text:'החברה מתקדמת בגיוס משקיע אסטרטגי שיפיץ את המוצר בארץ ובעולם, קיבלו 2 אישורי FDA ו-CE', investments:[{date:'02/03/2022',amount:250000},{date:'13/03/2023',amount:200000}] },
+  { name:'ארק סרגיקל', sector:'מכשיר להוצאת רחם', status:'פעיל', first_date:'28/03/2023', total_invested:150000, rounds:1, last_update:'01/07/2025', status_text:'החברה קיבלה אישור FDA האחרון, במשא ומתן למכירת החברה לפי שווי חברה של 40-50 מיליון דולר', investments:[{date:'28/03/2023',amount:150000}] },
+  { name:'A-EYE', sector:'בדיקה לעיוורון לסכרת', status:'פעיל', first_date:'11/01/2024', total_invested:200000, rounds:1, last_update:'01/07/2025', status_text:'השנה יגיעו ל-12 מיליון דולר ARR עם 400 מרכזים. מגיעים ל-break even ברבעון 2.', investments:[{date:'11/01/2024',amount:200000}] },
+  { name:'קארדיאקסנס', sector:'שעון ליד למדידת דופק', status:'פעיל', first_date:'05/01/2023', total_invested:700000, rounds:2, price_then:20.65, price_now:8.667, shares:9686, last_update:'01/06/2025', status_text:'מגייסת כ-5 מיליון דולר ממשקיעים קיימים, שווי ירד ל-25 מיליון דולר, צופה אקזיט בשנתיים הקרובות', investments:[{date:'05/01/2023',amount:200000,shares:9686,price_then:20.65,price_now:8.667},{date:'24/06/2025',amount:500000}] },
+  { name:"פת'קיפר סרג'יקל", sector:'ניתוחי עמוד שדרה רובוטיים', status:'פעיל', first_date:'06/12/2023', total_invested:400000, rounds:2, price_then:73.06, price_now:null, shares:4106, last_update:'01/06/2025', status_text:'מוכרת מספר מערכות כל רבעון וצומחת, יש לה כסף בקופה ל-9 חודשים קדימה, מתכנן סבב גיוס לקראת סוף השנה', investments:[{date:'06/12/2023',amount:300000,shares:4106,price_then:73.06},{date:'02/12/2024',amount:100000}] },
+  { name:'Nurami', sector:'תחבושות לרקמות מוח', status:'פעיל', first_date:'25/01/2024', total_invested:899994, rounds:2, price_then:44.08, price_now:75.17, shares:5103, last_update:'01/06/2025', status_text:"גייסה לפי שווי 59 מיליון דולר, J&J השקיעו 10M+ ממתוך 22.5M שגוייסו. הסכם רכישה פוטנציאלי ב-260M דולר ב-3 שנים", investments:[{date:'25/01/2024',amount:150000,shares:3402,price_then:44.08,price_now:75.17},{date:'20/10/2024',amount:749994,shares:1701,price_then:44.08,price_now:75.17}] },
+  { name:"אג'יליטי מניות", sector:'קרנות גידור-מניות', status:'פעיל', first_date:'29/07/2024', total_invested:10000000, rounds:6, last_update:'', status_text:'', investments:[{date:'29/07/2024',amount:2000000},{date:'26/09/2024',amount:1000000},{date:'27/11/2024',amount:2000000},{date:'28/01/2025',amount:1500000},{date:'25/02/2025',amount:1500000},{date:'28/04/2025',amount:2000000}] },
+  { name:"אינטראג'ל בע\"מ", sector:'זריקה לסרטן מקומי', status:'פעיל', first_date:'04/09/2024', total_invested:600000, rounds:2, last_update:'01/05/2025', status_text:'מתקדמת בניסויים בבני אדם ומראה שיפור בתוצאות של חולי סרטן ראש', investments:[{date:'04/09/2024',amount:500000},{date:'15/05/2025',amount:100000}] },
+  { name:'קרדיו ויה בעמ', sector:'מכשיר למעטפת הלב', status:'פעיל', first_date:'04/09/2024', total_invested:600000, rounds:2, last_update:'01/06/2025', status_text:'קיבלה אישור FDA באפריל, מתחילים פרוצדורות בארה"ב מאוגוסט, יתחילו להכניס כסף ב-Q1 2026', investments:[{date:'04/09/2024',amount:500000},{date:'30/06/2025',amount:100000}] },
+  { name:"אג'יליטי בונד", sector:'קרנות גידור-קרנות', status:'פעיל', first_date:'28/11/2024', total_invested:2000000, rounds:1, last_update:'', status_text:'', investments:[{date:'28/11/2024',amount:2000000}] },
+  { name:'חושן פודטק בעמ', sector:'חברת מזון-נבטים', status:'פעיל', first_date:'11/09/2024', total_invested:1245690, rounds:1, last_update:'', status_text:'מני מקבל דיווחים ישירות מנוחי', investments:[{date:'11/09/2024',amount:1245690}] },
+  { name:'סינרגי בעמ', sector:'חברת סייבר', status:'פעיל', first_date:'14/01/2025', total_invested:500000, rounds:2, last_update:'01/06/2025', status_text:'צומחת בקצב מהיר מאוד בהכנסות, הגיעה לכ-100 לקוחות משלמים, קיבלו הצעת מחיר שדחו', investments:[{date:'14/01/2025',amount:300000},{date:'03/06/2025',amount:200000}] },
+];
+
+let allData = [];
+let docsData = {}; // { companyName: [{name, type, date, url}] }
+let sortKey = 'total_desc';
+let sheetId = localStorage.getItem('portfolio_sheet_id') || '';
+
+function detectStatus(statusText) {
+  if (!statusText) return 'פעיל';
+  const t = statusText.toLowerCase();
+  if (t.includes('נמחק') || t.includes('סוגר') || t.includes('פירוק') || t.includes('נסגר')) return 'סגור';
+  if (t.includes('קשיים') || t.includes('הליכ') || t.includes('התפטר') || t.includes('מחפש')) return 'מעקב';
+  if (t.includes('נרכש') || t.includes('אקזיט') || t.includes('מכירה')) return 'יציאה';
+  return 'פעיל';
+}
+
+function calcMOIC(company) {
+  if (!company.price_now || !company.shares || company.price_now <= 0 || company.total_invested <= 0) return null;
+  try {
+    const paperVal = parseFloat(company.price_now) * parseFloat(company.shares);
+    return paperVal / company.total_invested;
+  } catch { return null; }
+}
+
+async function loadFromGoogleSheets(sheetId) {
+  // טעינת חברות
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=חברות`;
+  const res = await fetch(url);
+  const text = await res.text();
+  const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+  
+  const rows = json.table.rows;
+  const companies = rows.slice(1).map(row => {
+    const cells = row.c;
+    const get = (i) => cells[i] && cells[i].v != null ? cells[i].v : null;
+    const statusText = get(11) || '';
+    return {
+      name: get(0) || '',
+      sector: get(2) || '',
+      first_date: get(3) || '',
+      total_invested: parseFloat(get(4)) || 0,
+      rounds: parseInt(get(5)) || 1,
+      price_then: get(6),
+      price_now: get(7),
+      shares: parseFloat(get(5)) || 0,
+      last_update: get(10) || '',
+      status_text: statusText,
+      status: detectStatus(statusText),
+      investments: []
+    };
+  }).filter(c => c.name);
+
+  // טעינת מסמכים
+  try {
+    const docsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=מסמכים`;
+    const docsRes = await fetch(docsUrl);
+    const docsText = await docsRes.text();
+    const docsJson = JSON.parse(docsText.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+    docsData = {};
+    (docsJson.table.rows || []).slice(1).forEach(row => {
+      const c = row.c;
+      const get = (i) => c[i] && c[i].v != null ? String(c[i].v).trim() : '';
+      const company = get(0);
+      const name = get(1);
+      const type = get(2);
+      const date = get(3);
+      const url = get(4);
+      if (!company || !name) return;
+      if (!docsData[company]) docsData[company] = [];
+      docsData[company].push({ name, type: type.toUpperCase(), date, url });
+    });
+  } catch(e) { console.warn('Docs sheet load failed:', e); }
+
+  return companies;
+}
+
+async function loadData() {
+  document.getElementById('table-area').innerHTML = '<div class="loading"><div class="spinner"></div><br>טוען נתונים...</div>';
+  
+  if (sheetId) {
+    try {
+      allData = await loadFromGoogleSheets(sheetId);
+      document.getElementById('last-sync').textContent = 'עודכן: ' + new Date().toLocaleString('he-IL');
+      document.getElementById('setup-banner').classList.remove('show');
+    } catch(e) {
+      console.warn('Failed to load from sheets, using demo data:', e);
+      allData = DEMO_DATA;
+      document.getElementById('last-sync').textContent = 'מצב הדגמה (לא ניתן לטעון Sheet)';
+    }
+  } else {
+    allData = DEMO_DATA;
+    document.getElementById('last-sync').textContent = 'מצב הדגמה - הגדר Google Sheet להצגת הנתונים שלך';
+    document.getElementById('setup-banner').classList.add('show');
+  }
+
+  allData.forEach(c => {
+    if (!c.status) c.status = detectStatus(c.status_text || '');
+  });
+
+  populateSectorFilter();
+  renderMetrics();
+  renderTable();
+}
+
+function populateSectorFilter() {
+  const sectors = [...new Set(allData.map(c => c.sector).filter(Boolean))].sort();
+  const sel = document.getElementById('filter-sector');
+  sel.innerHTML = '<option value="">כל התחומים</option>' + sectors.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+function renderMetrics() {
+  const total_inv = allData.reduce((s, c) => s + (c.total_invested || 0), 0);
+  const active = allData.filter(c => c.status === 'פעיל').length;
+  const exits = allData.filter(c => c.status === 'יציאה').length;
+  
+  let paperTotal = 0;
+  allData.forEach(c => {
+    const m = calcMOIC(c);
+    if (m) paperTotal += c.total_invested * m;
+    else paperTotal += c.total_invested; // אם אין מחיר, נחשב 1x
+  });
+  const avgMoic = paperTotal / total_inv;
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric-card">
+      <div class="label">סה"כ השקעות</div>
+      <div class="value">$${(total_inv/1000000).toFixed(1)}M</div>
+      <div class="change">${allData.length} חברות בפורטפוליו</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">שווי נייר (מוערך)</div>
+      <div class="value">$${(paperTotal/1000000).toFixed(1)}M</div>
+      <div class="change ${avgMoic >= 1 ? 'up' : 'down'}">${((avgMoic-1)*100).toFixed(0)}% תשואה כוללת</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">מכפיל ממוצע</div>
+      <div class="value">${avgMoic.toFixed(2)}x</div>
+      <div class="change">${active} פעילות · ${exits} יציאות</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">חברות פעילות</div>
+      <div class="value">${active}</div>
+      <div class="change">${allData.filter(c=>c.status==='מעקב').length} במעקב · ${allData.filter(c=>c.status==='סגור').length} סגורות</div>
+    </div>
+  `;
+}
+
+function getStatusBadge(status) {
+  const map = { 'פעיל': 'badge-active', 'מעקב': 'badge-watch', 'יציאה': 'badge-exit', 'סגור': 'badge-dead' };
+  return `<span class="badge ${map[status] || 'badge-default'}">${status || '?'}</span>`;
+}
+
+const AVATARS = ['#dbeafe','#d1fae5','#fef3c7','#fce7f3','#ede9fe','#fee2e2','#e0f2fe','#f0fdf4'];
+const AVATAR_TEXT = ['#1e40af','#065f46','#92400e','#9d174d','#5b21b6','#991b1b','#0c4a6e','#14532d'];
+function getAvatar(name) {
+  const i = name.charCodeAt(0) % AVATARS.length;
+  return `background:${AVATARS[i]};color:${AVATAR_TEXT[i]}`;
+}
+
+function renderTable() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const fStatus = document.getElementById('filter-status').value;
+  const fSector = document.getElementById('filter-sector').value;
+  const sortBy = document.getElementById('sort-by').value;
+
+  let list = allData.filter(c => {
+    if (search && !c.name.toLowerCase().includes(search) && !(c.sector||'').toLowerCase().includes(search)) return false;
+    if (fStatus && c.status !== fStatus) return false;
+    if (fSector && c.sector !== fSector) return false;
+    return true;
+  });
+
+  list.sort((a, b) => {
+    if (sortBy === 'total_desc') return b.total_invested - a.total_invested;
+    if (sortBy === 'total_asc') return a.total_invested - b.total_invested;
+    if (sortBy === 'name_asc') return a.name.localeCompare(b.name, 'he');
+    if (sortBy === 'date_desc') return (b.first_date || '').localeCompare(a.first_date || '');
+    if (sortBy === 'moic_desc') return (calcMOIC(b) || 0) - (calcMOIC(a) || 0);
+    return 0;
+  });
+
+  if (!list.length) {
+    document.getElementById('table-area').innerHTML = '<div class="loading">לא נמצאו חברות</div>';
+    return;
+  }
+
+  const fmtMoney = (n) => {
+    if (!n) return '—';
+    if (n >= 1000000) return '$' + (n/1000000).toFixed(2) + 'M';
+    if (n >= 1000) return '$' + Math.round(n/1000) + 'K';
+    return '$' + Math.round(n).toLocaleString();
+  };
+
+  const rows = list.map(c => {
+    const moic = calcMOIC(c);
+    const moicHtml = moic
+      ? `<span class="moic ${moic >= 2 ? 'moic-up' : moic < 1 ? 'moic-down' : 'moic-flat'}">${moic.toFixed(2)}x</span>`
+      : '<span style="color:#94a3b8">—</span>';
+    const paperVal = moic ? c.total_invested * moic : null;
+    const initials = c.name.length >= 2 ? c.name.slice(0,2) : c.name;
+
+    return `<tr onclick="openDetail('${c.name.replace(/'/g,"\\'")}')">
+      <td><div class="company-cell">
+        <div class="avatar" style="${getAvatar(c.name)}">${initials}</div>
+        <div><div class="co-name">${c.name}</div><div class="co-sector">${c.sector || ''}</div></div>
+      </div></td>
+      <td style="color:#64748b;font-size:12px">${c.first_date || '—'}</td>
+      <td><strong>${fmtMoney(c.total_invested)}</strong></td>
+      <td style="text-align:center;font-weight:600">${c.rounds}</td>
+      <td>${paperVal ? fmtMoney(paperVal) : '—'}</td>
+      <td>${moicHtml}</td>
+      <td>${getStatusBadge(c.status)}</td>
+      <td style="color:#64748b;font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.last_update || ''}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('table-area').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>חברה</th>
+          <th>השקעה ראשונה</th>
+          <th>סה"כ השקעה</th>
+          <th>סבבים</th>
+          <th>שווי נייר</th>
+          <th>מכפיל</th>
+          <th>סטטוס</th>
+          <th>עדכון אחרון</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function openDetail(name) {
+  const c = allData.find(x => x.name === name);
+  if (!c) return;
+
+  const moic = calcMOIC(c);
+  const paperVal = moic ? c.total_invested * moic : null;
+  const fmtM = (n) => n >= 1000000 ? '$'+(n/1000000).toFixed(2)+'M' : n >= 1000 ? '$'+Math.round(n/1000)+'K' : n ? '$'+Math.round(n).toLocaleString() : '—';
+  const initials = c.name.length >= 2 ? c.name.slice(0,2) : c.name;
+
+  document.getElementById('detail-modal').innerHTML = `
+    <button class="modal-close" onclick="document.getElementById('detail-overlay').classList.remove('open')">✕</button>
+    <div class="modal-header">
+      <div class="modal-avatar" style="${getAvatar(c.name)}">${initials}</div>
+      <div>
+        <div class="modal-title">${c.name}</div>
+        <div class="modal-subtitle">${c.sector || ''} · ${getStatusBadge(c.status)}</div>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="kl">סה"כ השקעה</div><div class="kv">${fmtM(c.total_invested)}</div></div>
+      <div class="kpi"><div class="kl">שווי נייר</div><div class="kv" style="color:${moic>=1?'#198754':moic?'#dc3545':'#1a1a2e'}">${paperVal ? fmtM(paperVal) : '—'}</div></div>
+      <div class="kpi"><div class="kl">מכפיל (MOIC)</div><div class="kv" style="color:${moic>=2?'#198754':moic<1&&moic?'#dc3545':'#1a1a2e'}">${moic ? moic.toFixed(2)+'x' : '—'}</div></div>
+    </div>
+
+    <div class="section-label">עדכון סטטוס אחרון</div>
+    ${c.status_text ? `<div class="desc-box">${c.status_text}</div>` : '<div class="desc-box" style="color:#94a3b8">אין עדכון</div>'}
+
+    <div class="section-label">סבבי השקעה (${c.rounds})</div>
+    <table class="rounds-table">
+      <thead><tr><th>תאריך</th><th>סכום</th><th>מניות</th><th>מחיר אז</th><th>מחיר עכשיו</th></tr></thead>
+      <tbody>
+        ${c.investments && c.investments.length > 0
+          ? c.investments.map(inv => `<tr>
+              <td>${inv.date || '—'}</td>
+              <td>${fmtM(inv.amount)}</td>
+              <td>${inv.shares || '—'}</td>
+              <td>${inv.price_then ? '$'+parseFloat(inv.price_then).toFixed(2) : '—'}</td>
+              <td>${inv.price_now && inv.price_now > 0 ? '$'+parseFloat(inv.price_now).toFixed(2) : '—'}</td>
+            </tr>`).join('')
+          : `<tr><td colspan="5" style="text-align:center;color:#94a3b8">להוספת פרטי סבבים - ראה גיליון "סבבי השקעה"</td></tr>`
+        }
+      </tbody>
+    </table>
+
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f1f5f9;display:flex;gap:8px">
+      <span style="font-size:12px;color:#94a3b8">עודכן: ${c.last_update || '—'}</span>
+    </div>
+
+    <div class="section-label">מסמכים</div>
+    ${(() => {
+      const docs = docsData[c.name] || [];
+      if (!docs.length) return '<div style="color:#94a3b8;font-size:13px;padding:4px 0">אין מסמכים — הוסף בגיליון "מסמכים" ב-Google Sheet</div>';
+      const icon = (type) => {
+        if (type === 'PDF') return '📄';
+        if (type.includes('PPT')) return '📊';
+        if (type.includes('DOC') || type.includes('WORD')) return '📝';
+        return '📁';
+      };
+      return '<div class="docs-list">' + docs.map(d => {
+        const target = d.url ? `href="${d.url}" target="_blank"` : '';
+        return `<a class="doc-row" ${target}>
+          <span class="doc-icon">${icon(d.type)}</span>
+          <span class="doc-row-name">${d.name}</span>
+          ${d.date ? `<span class="doc-row-date">${d.date}</span>` : ''}
+        </a>`;
+      }).join('') + '</div>';
+    })()}
+  `;
+
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function closeDetail(e) {
+  if (e.target === document.getElementById('detail-overlay'))
+    document.getElementById('detail-overlay').classList.remove('open');
+}
+
+function openConfig() { document.getElementById('config-overlay').classList.add('open'); document.getElementById('sheet-id-input').value = sheetId; }
+function closeConfig(e) { if (e.target === document.getElementById('config-overlay')) document.getElementById('config-overlay').classList.remove('open'); }
+function saveConfig() {
+  sheetId = document.getElementById('sheet-id-input').value.trim();
+  localStorage.setItem('portfolio_sheet_id', sheetId);
+  document.getElementById('config-overlay').classList.remove('open');
+  loadData();
+}
+
+// Init
+loadData();
+</script>
+</body>
+</html>
