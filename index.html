@@ -271,8 +271,8 @@ function calcMOIC(company) {
 }
 
 async function loadFromGoogleSheets(sheetId) {
-  // טעינת חברות
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=חברות`;
+  // טעינת חברות - gid=0 הוא הגיליון הראשון
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=1259277578`;
   const res = await fetch(url);
   const text = await res.text();
   const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
@@ -298,9 +298,9 @@ async function loadFromGoogleSheets(sheetId) {
     };
   }).filter(c => c.name);
 
-  // טעינת מסמכים
+  // טעינת מסמכים - gid=818192889
   try {
-    const docsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=מסמכים`;
+    const docsUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=818192889`;
     const docsRes = await fetch(docsUrl);
     const docsText = await docsRes.text();
     const docsJson = JSON.parse(docsText.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
